@@ -3,7 +3,7 @@ import 'package:todo_list/models/todo.dart';
 import 'package:todo_list/widgets/todo_list_item.dart';
 
 class TodoListPage extends StatefulWidget {
-  TodoListPage({Key? key}) : super(key: key);
+  const TodoListPage({Key? key}) : super(key: key);
 
   @override
   State<TodoListPage> createState() => _TodoListPageState();
@@ -11,6 +11,8 @@ class TodoListPage extends StatefulWidget {
 
 class _TodoListPageState extends State<TodoListPage> {
   List<Todo> todos = [];
+  Todo? deletedTodo;
+  int? deletedTodoPosition;
 
   final TextEditingController todoController = TextEditingController();
 
@@ -29,9 +31,10 @@ class _TodoListPageState extends State<TodoListPage> {
                     Expanded(
                       child: TextField(
                         controller: todoController,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           border: OutlineInputBorder(),
                           labelText: "Adicione uma tarefa",
+                          hoverColor: Colors.purple,
                         ),
                       ),
                     ),
@@ -72,37 +75,121 @@ class _TodoListPageState extends State<TodoListPage> {
                       for (Todo todo in todos)
                         TodoListItem(
                           todo: todo,
+                          onDelete: onDelete,
+                          onEdit: onEdit,
                         ),
                     ],
                   ),
                 ),
-                Row(
-                  children: [
-                    Expanded(
-                        child: Text(
-                      "Você possui ${todos.length} tarefas pendentes",
+                Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 3),
+                    child: Row(
+                      children: [
+                        Expanded(
+                            child: Text(
+                          "Você possui ${todos.length} tarefas pendentes",
+                        )),
+                        const SizedBox(
+                          width: 8,
+                        ),
+                        ElevatedButton(
+                          onPressed: () {
+                            showDeleteTodosConfirmationDialog();
+                          },
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.purple,
+                              padding: const EdgeInsets.all(18)),
+                          child: const Text("Limpar tudo"),
+                        ),
+                      ],
                     )),
-                    const SizedBox(
-                      width: 8,
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        setState(() {
-                          todos.clear();
-                        });
-                      },
-                      style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.purple,
-                          padding: const EdgeInsets.all(18)),
-                      child: const Text("Limpar tudo"),
-                    ),
-                  ],
-                ),
               ],
             ),
           ),
         ),
       ),
     );
+  }
+
+  void showDeleteTodosConfirmationDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Limpar Tudo?"),
+        content: const Text("Tem certeza que deseja excluir todas as tarefas?"),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: const Text(
+              "Cancelar",
+              style: TextStyle(
+                color: Colors.purple,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              onClearAll();
+            },
+            child: const Text(
+              "Limpar Tudo",
+              style: TextStyle(
+                color: Colors.red,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void onClearAll() {
+    setState(() {
+      todos.clear();
+    });
+  }
+
+  void onDelete(Todo todo) {
+    deletedTodo = todo;
+    deletedTodoPosition = todos.indexOf(todo);
+
+    setState(() {
+      todos.remove(todo);
+    });
+
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          "Tarefa ${todo.title} removida com sucesso!",
+          style: const TextStyle(
+            color: Color(0xff060708),
+          ),
+        ),
+        backgroundColor: Colors.white,
+        action: SnackBarAction(
+          label: 'Desfazer',
+          textColor: Colors.purple,
+          onPressed: () {
+            setState(() {
+              todos.insert(deletedTodoPosition!, deletedTodo!);
+            });
+          },
+        ),
+        duration: const Duration(seconds: 5),
+      ),
+    );
+  }
+
+  void onEdit(Todo todo) {
+    int todoEditIndex = todos.indexOf(todo);
+    setState(() {
+      todos[todoEditIndex].title = todoController.text;
+      todos[todoEditIndex].dateTime = DateTime.now();
+      todoController.clear();
+    });
   }
 }
