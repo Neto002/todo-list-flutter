@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:todo_list/pages/todo_list_page.dart';
+import 'package:todo_list/pages/login_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -13,7 +13,7 @@ class MyApp extends StatelessWidget {
     return const MaterialApp(
       color: Colors.purple,
       debugShowCheckedModeBanner: false,
-      home: TodoListPage(),
+      home: LoginPage(),
     );
   }
 }
