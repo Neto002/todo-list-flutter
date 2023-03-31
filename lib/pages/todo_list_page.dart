@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:todo_list/models/todo.dart';
+import 'package:todo_list/repositories/todo_repository.dart';
 import 'package:todo_list/widgets/todo_list_item.dart';
 
 class TodoListPage extends StatefulWidget {
@@ -10,11 +11,24 @@ class TodoListPage extends StatefulWidget {
 }
 
 class _TodoListPageState extends State<TodoListPage> {
+  final TextEditingController todoController = TextEditingController();
+  final TodoRepository todoRepository = TodoRepository();
+
   List<Todo> todos = [];
   Todo? deletedTodo;
   int? deletedTodoPosition;
+  String? errorText;
 
-  final TextEditingController todoController = TextEditingController();
+  @override
+  void initState() {
+    super.initState();
+
+    todoRepository.getTodoList().then((value) {
+      setState(() {
+        todos = value;
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,10 +45,19 @@ class _TodoListPageState extends State<TodoListPage> {
                     Expanded(
                       child: TextField(
                         controller: todoController,
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
+                        cursorColor: Colors.purple,
+                        decoration: InputDecoration(
+                          border: const OutlineInputBorder(),
                           labelText: "Adicione uma tarefa",
-                          hoverColor: Colors.purple,
+                          focusedBorder: const OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: Colors.purple,
+                            ),
+                          ),
+                          labelStyle: const TextStyle(
+                            color: Colors.purple,
+                          ),
+                          errorText: errorText,
                         ),
                       ),
                     ),
@@ -44,14 +67,23 @@ class _TodoListPageState extends State<TodoListPage> {
                     ElevatedButton(
                       onPressed: () {
                         String text = todoController.text;
-                        setState(() {
-                          if (todoController.text.isNotEmpty) {
-                            Todo newTodo =
-                                Todo(title: text, dateTime: DateTime.now());
+                        if (todoController.text.isNotEmpty) {
+                          setState(() {
+                            Todo newTodo = Todo(
+                              title: text,
+                              dateTime: DateTime.now(),
+                            );
                             todos.add(newTodo);
-                            todoController.clear();
-                          }
-                        });
+                            errorText = null;
+                          });
+                          todoController.clear();
+                          todoRepository.saveTodoList(todos);
+                        } else {
+                          setState(() {
+                            errorText = "O título não pode ser vazio!";
+                          });
+                          return;
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.purple,
@@ -150,6 +182,7 @@ class _TodoListPageState extends State<TodoListPage> {
     setState(() {
       todos.clear();
     });
+    todoRepository.saveTodoList(todos);
   }
 
   void onDelete(Todo todo) {
@@ -159,6 +192,7 @@ class _TodoListPageState extends State<TodoListPage> {
     setState(() {
       todos.remove(todo);
     });
+    todoRepository.saveTodoList(todos);
 
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -177,6 +211,7 @@ class _TodoListPageState extends State<TodoListPage> {
             setState(() {
               todos.insert(deletedTodoPosition!, deletedTodo!);
             });
+            todoRepository.saveTodoList(todos);
           },
         ),
         duration: const Duration(seconds: 5),
@@ -185,11 +220,28 @@ class _TodoListPageState extends State<TodoListPage> {
   }
 
   void onEdit(Todo todo) {
-    int todoEditIndex = todos.indexOf(todo);
-    setState(() {
-      todos[todoEditIndex].title = todoController.text;
-      todos[todoEditIndex].dateTime = DateTime.now();
-      todoController.clear();
-    });
+    if (todoController.text.isNotEmpty) {
+      int todoEditIndex = todos.indexOf(todo);
+      setState(() {
+        todos[todoEditIndex].title = todoController.text;
+        todos[todoEditIndex].dateTime = DateTime.now();
+        todoController.clear();
+      });
+      todoRepository.saveTodoList(todos);
+    } else {
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Digite o novo nome da tarefa no campo \"Adicione uma tarefa\"",
+            style: TextStyle(
+              color: Color(0xff060708),
+            ),
+          ),
+          backgroundColor: Colors.white,
+          duration: Duration(seconds: 5),
+        ),
+      );
+    }
   }
 }
