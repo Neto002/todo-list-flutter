@@ -24,7 +24,7 @@ class _LoginPageState extends State<LoginPage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Text(
-                  "Login Todo Neto",
+                  "Login Todo List Neto",
                   style: TextStyle(
                     fontSize: 32,
                   ),
@@ -33,18 +33,36 @@ class _LoginPageState extends State<LoginPage> {
                     padding: const EdgeInsets.only(top: 16),
                     child: TextField(
                       controller: usuarioController,
+                      cursorColor: Colors.purple,
                       decoration: const InputDecoration(
                         border: OutlineInputBorder(),
                         labelText: "Usuário",
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(
+                            color: Colors.purple,
+                          ),
+                        ),
+                        labelStyle: TextStyle(
+                          color: Colors.purple,
+                        ),
                       ),
                     )),
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   child: TextField(
                     controller: senhaController,
+                    cursorColor: Colors.purple,
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(),
                       labelText: "Senha",
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Colors.purple,
+                        ),
+                      ),
+                      labelStyle: TextStyle(
+                        color: Colors.purple,
+                      ),
                     ),
                     obscureText: true,
                     enableSuggestions: false,
